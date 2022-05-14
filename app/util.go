@@ -1,13 +1,15 @@
 package app
 
-import "path"
+import (
+	"path"
+)
 
 func joinPaths(absolutePath, relativePath string) string {
 	if relativePath == "" {
 		return absolutePath
 	}
 	finalPath := path.Join(absolutePath, relativePath)
-	if lastChar(relativePath) == '/' && lastChar(absolutePath) != '/' {
+	if lastChar(relativePath) == '/' && lastChar(finalPath) != '/' {
 		return finalPath + "/"
 	}
 	return finalPath
