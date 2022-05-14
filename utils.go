@@ -1,4 +1,4 @@
-package app
+package tinygo
 
 import (
 	"path"

@@ -1,4 +1,4 @@
-package app
+package tinygo
 
 import (
 	"github.com/stretchr/testify/assert"
