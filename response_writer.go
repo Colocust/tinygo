@@ -1,6 +1,8 @@
 package tinygo
 
-import "net/http"
+import (
+	"net/http"
+)
 
 const (
 	noWritten     = -1

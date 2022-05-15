@@ -9,3 +9,7 @@ type methodTree struct {
 }
 
 type methodsTree []methodTree
+
+func (n *node) getValue(path string) {
+
+}
