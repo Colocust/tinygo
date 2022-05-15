@@ -21,3 +21,5 @@ func lastChar(str string) uint8 {
 	}
 	return str[len(str)-1]
 }
+
+type H = map[string]any
