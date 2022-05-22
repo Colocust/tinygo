@@ -1,15 +1,9 @@
 package tinygo
 
-type node struct {
+type methodTrees []MethodTree
+
+type MethodTree struct {
 }
 
-type methodTree struct {
-	method string
-	root   *node
-}
-
-type methodsTree []methodTree
-
-func (n *node) getValue(path string) {
-
+type Node struct {
 }

@@ -1,8 +1,6 @@
 package tinygo
 
-import (
-	"path"
-)
+import "path"
 
 func joinPaths(absolutePath, relativePath string) string {
 	if relativePath == "" {
@@ -10,16 +8,11 @@ func joinPaths(absolutePath, relativePath string) string {
 	}
 	finalPath := path.Join(absolutePath, relativePath)
 	if lastChar(relativePath) == '/' && lastChar(finalPath) != '/' {
-		return finalPath + "/"
+		finalPath += "/"
 	}
 	return finalPath
 }
 
-func lastChar(str string) uint8 {
-	if str == "" {
-		panic("The length of the string can't be 0")
-	}
+func lastChar(str string) byte {
 	return str[len(str)-1]
 }
-
-type H = map[string]any
