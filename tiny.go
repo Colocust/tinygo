@@ -1,7 +1,6 @@
 package tinygo
 
 import (
-	"log"
 	"net/http"
 	"sync"
 )
@@ -67,7 +66,6 @@ func (e *Engine) Run(addr string) (err error) {
 }
 
 func (e *Engine) findRouteByUri(method string, uri string) HandlersChain {
-	log.Println(uri, e.router)
 	return e.router[method][uri]
 }
 

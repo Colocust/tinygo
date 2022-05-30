@@ -1,6 +1,9 @@
 package tinygo
 
-import "net/http"
+import (
+	"github.com/Colocust/tinygo/render"
+	"net/http"
+)
 
 // 处理writer
 type Context struct {
@@ -21,4 +24,19 @@ func (ctx *Context) Next() {
 
 func (ctx *Context) reset() {
 	ctx.index = -1
+}
+
+func (ctx Context) Json(status int, data interface{}) {
+	ctx.render(status, render.Json{
+		Data: data,
+	})
+}
+
+func (ctx Context) render(status int, r render.Render) {
+	ctx.status(status)
+	r.Render(ctx.Response)
+}
+
+func (ctx Context) status(status int) {
+	ctx.Response.WriteHeader(status)
 }
