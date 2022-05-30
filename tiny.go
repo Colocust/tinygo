@@ -1,38 +1,76 @@
 package tinygo
 
 import (
-	"context"
 	"net/http"
 	"sync"
 )
 
 type Engine struct {
-	context.Context
 	router map[string]map[string]HandlersChain
 	RouterGroup
-	pool sync.Pool
+	pool       sync.Pool
+	allNoRoute HandlersChain
 }
 
-type HandlerFunc func(c *Context) error
+type HandlerFunc func(c *Context)
 type HandlersChain []HandlerFunc
 
-func (e *Engine) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
+var (
+	default404Body = []byte("404 page not found")
+)
 
-}
-
-func (e *Engine) addRoute(method string, absolutePath string, handlers HandlersChain) {
-
-}
-
-func (e *Engine) findRouteByRequest(uri string) HandlersChain {
-
-}
-
-func (e *Engine) Get(path string, handlers ...HandlerFunc) IRoutes {
-	return e.RouterGroup.handle(http.MethodGet, path, handlers...)
-}
-
-func (e *Engine) Use(handlers ...HandlerFunc) IRoutes {
-	e.RouterGroup.Use(handlers...)
+func Default() *Engine {
+	e := New()
 	return e
+}
+
+func New() *Engine {
+	engine := &Engine{
+		RouterGroup: RouterGroup{
+			Handlers: nil,
+			basePath: "/",
+		},
+	}
+	engine.RouterGroup.engine = engine
+	return engine
+}
+
+func (e *Engine) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
+	ctx := new(Context)
+	ctx.Request, ctx.Response = req, writer
+	ctx.reset()
+	e.handleHTTPRequest(ctx)
+}
+
+func (e *Engine) handleHTTPRequest(ctx *Context) {
+	method, uri := ctx.Request.Method, ctx.Request.URL.Path
+	handlers := e.findRouteByUri(method, uri)
+	if len(handlers) > 0 {
+		ctx.Handlers = handlers
+		ctx.Next()
+		return
+	}
+
+	ctx.Handlers = e.allNoRoute
+	serveError(ctx, http.StatusNotFound, default404Body)
+}
+
+func (e *Engine) Run(addr string) (err error) {
+	err = http.ListenAndServe(addr, e)
+	return
+}
+
+func (e *Engine) findRouteByUri(method string, uri string) HandlersChain {
+	return HandlersChain{
+		GetUserInfo,
+	}
+}
+
+func (e *Engine) addRoute(method string, uri string, handlers HandlersChain) {
+
+}
+
+
+func serveError(ctx *Context, status int, defaultMessage []byte) {
+
 }
