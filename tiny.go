@@ -1,6 +1,7 @@
 package tinygo
 
 import (
+	"log"
 	"net/http"
 	"sync"
 )
@@ -30,7 +31,12 @@ func New() *Engine {
 			Handlers: nil,
 			basePath: "/",
 		},
+		router: make(map[string]map[string]HandlersChain),
 	}
+
+	engine.router[http.MethodGet] = make(map[string]HandlersChain)
+	engine.router[http.MethodPost] = make(map[string]HandlersChain)
+
 	engine.RouterGroup.engine = engine
 	return engine
 }
@@ -61,15 +67,13 @@ func (e *Engine) Run(addr string) (err error) {
 }
 
 func (e *Engine) findRouteByUri(method string, uri string) HandlersChain {
-	return HandlersChain{
-		GetUserInfo,
-	}
+	log.Println(uri, e.router)
+	return e.router[method][uri]
 }
 
 func (e *Engine) addRoute(method string, uri string, handlers HandlersChain) {
-
+	e.router[method][uri] = handlers
 }
-
 
 func serveError(ctx *Context, status int, defaultMessage []byte) {
 

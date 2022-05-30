@@ -1,6 +1,8 @@
 package tinygo
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type IRoutes interface {
 	Group(string, ...HandlerFunc) IRoutes
@@ -23,6 +25,7 @@ func (rg *RouterGroup) Group(path string, handlers ...HandlerFunc) IRoutes {
 	}
 }
 
+// 为当前路由组添加中间件
 func (rg *RouterGroup) Use(handlers ...HandlerFunc) IRoutes {
 	rg.Handlers = append(rg.Handlers, handlers...)
 	return rg
