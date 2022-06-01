@@ -1,14 +1,17 @@
-package tinygo
+package controllers
 
-import "log"
+import (
+	"github.com/Colocust/tinygo"
+	"log"
+)
 
-func GetUserInfo(c *Context) {
+func GetUserInfo(c *tinygo.Context) {
 	log.Println("GetUserInfoStart")
 	c.Next()
 	log.Println("GetUserInfoEnd")
 }
 
-func SetUserInfo(c *Context) {
+func SetUserInfo(c *tinygo.Context) {
 	log.Println("SetUserInfoStart")
 	c.Json(200, map[string]interface{}{
 		"code": 200,
