@@ -86,6 +86,84 @@ g2 := g1.Group("user", gin.Recovery())
 
 RouterGroup还有其他的很多用法，例如Use函数可以为当前路由组添加中间件，Get、Post等函数可以添加路由。
 
+## Context
+
+
 ## 中间件
 
+### 结构
+```Golang
+type HandlerFunc func(*Context)
+```
+中间件，其原理就是对一个方法进行包裹装饰，然后返回同类型的方法。
+
+应用场景大多是需要对某一类函数进行通用的前置或者后置处理
+
+### 具体使用
+当框架匹配到具体路由并获取到需要执行的中间件后，会调用Next函数按照中间件添加的顺序依次执行。
+
+```go
+func (c *Context) Next() {
+	c.index++
+	for c.index < int8(len(c.handlers)) {
+		c.handlers[c.index](c)
+		c.index++
+	}
+}
+```
+例如此时我有以下三个中间件，并按顺序依次绑定在指定路由中：
+```go
+func A(ctx *gin.Context) {
+	log.Println("A Start")
+	log.Println("A End")
+}
+
+func B(ctx *gin.Context) {
+	log.Println("B Start")
+	log.Println("B End")
+}
+
+func C(ctx *gin.Context) {
+	log.Println("C Start")
+	log.Println("C End")
+}
+```
+如上述逻辑所示，每个中间件都会完成自己所有的业务逻辑后才会开始执行下一个中间件。
+```
+A Start
+A End
+B Start
+B End
+C Start
+C End
+```
+但有些业务场景需要我们在结束之前就开始调用下一个中间件，例如超时控制中间件。
+
+那么此时我们就需要在中间件里手动调用一下Next函数来改变其执行过程了。还是刚刚的例子：
+```go
+func A(ctx *gin.Context) {
+	log.Println("A Start")
+	ctx.Next()
+	log.Println("A End")
+}
+
+func B(ctx *gin.Context) {
+	log.Println("B Start")
+	log.Println("B End")
+}
+
+func C(ctx *gin.Context) {
+	log.Println("C Start")
+	log.Println("C End")
+}
+```
+此时日志打印结果便为：
+```
+A Start
+B Start
+B End
+C Start
+C End
+A End
+```
 ## 路由树
