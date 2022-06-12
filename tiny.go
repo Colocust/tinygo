@@ -1,8 +1,10 @@
 package tinygo
 
 import (
+	"context"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type Engine struct {
@@ -17,6 +19,7 @@ type HandlersChain []HandlerFunc
 
 var (
 	default404Body = []byte("404 page not found")
+	default504Body = "504 Gateway Time-out"
 )
 
 func Default() *Engine {
@@ -75,4 +78,32 @@ func (e *Engine) addRoute(method string, uri string, handlers HandlersChain) {
 
 func serveError(ctx *Context, status int, defaultMessage []byte) {
 
+}
+
+//
+//func HandlerFuncWithRecovery() HandlerFunc {
+//
+//}
+
+func HandlerFuncWithTimeout(t time.Duration) HandlerFunc {
+	return func(c *Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), t)
+		defer cancel()
+		c.Request = c.Request.WithContext(ctx)
+
+		// 一定要有容量 否则子协程无法退出
+		finish := make(chan struct{}, 1)
+		go func() {
+			c.Next()
+			finish <- struct{}{}
+		}()
+
+		select {
+		case <-ctx.Done():
+			c.Abort()
+			c.Json(http.StatusGatewayTimeout, default504Body)
+			c.SetTimeout()
+		case <-finish:
+		}
+	}
 }

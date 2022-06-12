@@ -3,21 +3,30 @@ package controllers
 import (
 	"github.com/Colocust/tinygo"
 	"log"
+	"time"
 )
 
-func GetUserInfo(c *tinygo.Context) {
-	log.Println("GetUserInfoStart")
-	c.Next()
-	log.Println("GetUserInfoEnd")
+func A(ctx *tinygo.Context) {
+	log.Println("A Start")
+
+	log.Println("A End")
 }
 
-func SetUserInfo(c *tinygo.Context) {
-	log.Println("SetUserInfoStart")
-	c.Json(200, map[string]interface{}{
-		"code": 200,
-		"data": map[string]interface{}{
-			"info": "ss",
-		},
+func B(ctx *tinygo.Context) {
+	log.Println("B Start")
+
+	time.Sleep(time.Second * 1)
+
+	ctx.Json(200, "504 Gateway Time-out")
+
+	log.Println("B End")
+}
+
+func C(ctx *tinygo.Context) {
+	log.Println("C Start")
+	//time.Sleep(time.Second * 1)
+	ctx.Json(200, map[string]interface{}{
+		"data": 200,
 	})
-	log.Println("SetUserInfoEnd")
+	log.Println("C End")
 }
