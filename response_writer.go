@@ -12,9 +12,6 @@ const (
 type ResponseWriter interface {
 	http.ResponseWriter
 
-	// 写入httpStatus
-	WriteHeaderNow()
-
 	Reset(http.ResponseWriter)
 
 	Written() bool
