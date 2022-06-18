@@ -1,7 +1,7 @@
 # Gin框架学习
 
 ## 开篇
-Golang想要实现一个简易的Web框架非常简单，只需要实现Http包中的Handler接口即可。
+Golang想要实现一个简易的Web框架非常简单，只需要实现HTTP包中的Handler接口即可。
 ```golang
 package framework
 
@@ -88,6 +88,82 @@ RouterGroup还有其他的很多用法，例如Use函数可以为当前路由组
 
 ## Context
 
+每一个HTTP请求都会对应一个Context。
+### 结构
+```go
+type Context struct {
+	writermem responseWriter
+	Request   *http.Request     // HTTP请求包含的所有信息，例如method、uri、headers等。
+	Writer    ResponseWriter    
+
+	Params   Params
+	handlers HandlersChain      // 需要执行的所有中间件
+	index    int8               // 当前执行的中间件对应handlers切片中的下标
+	fullPath string             // 完整uri
+
+	engine       *Engine        // 上下文对应的engine指针
+	params       *Params
+	skippedNodes *[]skippedNode
+	
+	mu sync.RWMutex             // 与Keys配合使用的读写锁
+	Keys map[string]any         // 自定义的一些元数据
+
+	Errors errorMsgs
+	
+	Accepted []string
+	
+	queryCache url.Values
+	
+	formCache url.Values
+	
+	sameSite http.SameSite
+}
+```
+重点关注下writermem、Request、Writer、handlers、index这几个成员就好了
+
+### 初始化
+```go
+func (engine *Engine) allocateContext() *Context {
+    v := make(Params, 0, engine.maxParams)
+    skippedNodes := make([]skippedNode, 0, engine.maxSections)
+    return &Context{engine: engine, params: &v, skippedNodes: &skippedNodes}
+}
+
+engine.pool.New = func() any {
+	return engine.allocateContext()
+}
+```
+Gin会为每一个HTTP请求分配一个Context，这些Context并不是每次都需要实例化，而是在框架启动时提前准备好并存储在sync.pool中，需要的时候Get获取，用完以后再Put放回去。
+### 一些重要的结构函数
+
+#### 往HTTP Response写入数据（header、statusCode、data）的一系列结构函数
+Gin提供了一个Render的结构函数，它支持传入不同的返回格式，例如Json、XML等一些自定义的格式，只要实现了render包中的Render接口即可。
+```go
+func (c *Context) Render(code int, r render.Render) {
+    c.Status(code)
+    if !bodyAllowedForStatus(code) {
+        r.WriteContentType(c.Writer)
+        c.Writer.WriteHeaderNow()
+        return
+    }
+    
+    if err := r.Render(c.Writer); err != nil {
+        panic(err)
+    }
+}
+```
+以Json为例，它会把指定对象序列化为字节流并调用ResponseWriter接口中的Write函数返回数据。
+```go
+func WriteJSON(w http.ResponseWriter, obj any) error {
+    writeContentType(w, jsonContentType)
+    jsonBytes, err := json.Marshal(obj)
+    if err != nil {
+    return err
+    }
+    _, err = w.Write(jsonBytes)
+    return nil
+}
+```
 
 ## 中间件
 

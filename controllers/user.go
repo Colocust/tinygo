@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/Colocust/tinygo"
 	"log"
+	"reflect"
 	"time"
 )
 
@@ -13,6 +14,7 @@ func A(ctx *tinygo.Context) {
 }
 
 func B(ctx *tinygo.Context) {
+	log.Println(reflect.TypeOf(ctx.Response))
 	log.Println("B Start")
 
 	time.Sleep(time.Second * 1)
