@@ -24,6 +24,7 @@ var (
 
 func Default() *Engine {
 	e := New()
+	e.Use(HandlerFuncWithTimeout(time.Millisecond * 500))
 	return e
 }
 
@@ -35,24 +36,40 @@ func New() *Engine {
 		},
 		router: make(map[string]map[string]HandlersChain),
 	}
-
-	engine.router[http.MethodGet] = make(map[string]HandlersChain)
-	engine.router[http.MethodPost] = make(map[string]HandlersChain)
-
+	engine.routerReset()
 	engine.RouterGroup.engine = engine
+
+	engine.pool.New = func() interface{} {
+		return engine.allocateContext()
+	}
 	return engine
 }
 
+func (e *Engine) allocateContext() *Context {
+	return &Context{
+		engine: e,
+	}
+}
+
+func (e *Engine) routerReset() {
+	e.router[http.MethodGet] = make(map[string]HandlersChain)
+	e.router[http.MethodPost] = make(map[string]HandlersChain)
+}
+
 func (e *Engine) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-	ctx := new(Context)
-	ctx.Request, ctx.Response = req, writer
-	ctx.reset()
+	ctx := e.pool.Get().(*Context)
+	ctx.Writer = &responseWriter{
+		ResponseWriter: writer,
+	}
+	ctx.Writer.Reset()
+	ctx.Request = req
+
 	e.handleHTTPRequest(ctx)
 }
 
 func (e *Engine) handleHTTPRequest(ctx *Context) {
 	method, uri := ctx.Request.Method, ctx.Request.URL.Path
-	handlers := e.findRouteByUri(method, uri)
+	handlers := e.findHandlersByUri(method, uri)
 	if len(handlers) > 0 {
 		ctx.Handlers = handlers
 		ctx.Next()
@@ -68,7 +85,7 @@ func (e *Engine) Run(addr string) (err error) {
 	return
 }
 
-func (e *Engine) findRouteByUri(method string, uri string) HandlersChain {
+func (e *Engine) findHandlersByUri(method string, uri string) HandlersChain {
 	return e.router[method][uri]
 }
 
@@ -79,11 +96,6 @@ func (e *Engine) addRoute(method string, uri string, handlers HandlersChain) {
 func serveError(ctx *Context, status int, defaultMessage []byte) {
 
 }
-
-//
-//func HandlerFuncWithRecovery() HandlerFunc {
-//
-//}
 
 func HandlerFuncWithTimeout(t time.Duration) HandlerFunc {
 	return func(c *Context) {
@@ -102,7 +114,6 @@ func HandlerFuncWithTimeout(t time.Duration) HandlerFunc {
 		case <-ctx.Done():
 			c.Abort()
 			c.Json(http.StatusGatewayTimeout, default504Body)
-			c.SetTimeout()
 		case <-finish:
 		}
 	}

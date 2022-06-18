@@ -22,7 +22,6 @@ type ResponseWriter interface {
 	// 获取当前已经写入的字节数量
 	Size() int
 
-	// ResponseWriter会复用 故这里需要重置
 	Reset()
 }
 
@@ -32,8 +31,7 @@ type responseWriter struct {
 	status int
 }
 
-func (w *responseWriter) Reset(writer http.ResponseWriter) {
-	w.ResponseWriter = writer
+func (w *responseWriter) Reset() {
 	w.size = noWritten
 	w.status = defaultStatus
 }
