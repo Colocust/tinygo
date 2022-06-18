@@ -36,7 +36,7 @@ func New() *Engine {
 		},
 		router: make(map[string]map[string]HandlersChain),
 	}
-	engine.routerReset()
+	engine.routerInit()
 	engine.RouterGroup.engine = engine
 
 	engine.pool.New = func() interface{} {
@@ -48,20 +48,19 @@ func New() *Engine {
 func (e *Engine) allocateContext() *Context {
 	return &Context{
 		engine: e,
+		Writer: &responseWriter{},
 	}
 }
 
-func (e *Engine) routerReset() {
+func (e *Engine) routerInit() {
 	e.router[http.MethodGet] = make(map[string]HandlersChain)
 	e.router[http.MethodPost] = make(map[string]HandlersChain)
 }
 
 func (e *Engine) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	ctx := e.pool.Get().(*Context)
-	ctx.Writer = &responseWriter{
-		ResponseWriter: writer,
-	}
-	ctx.Writer.Reset()
+
+	ctx.Writer.Reset(writer)
 	ctx.Request = req
 	ctx.reset()
 

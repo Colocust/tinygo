@@ -15,7 +15,7 @@ type ResponseWriter interface {
 	// 写入httpStatus
 	WriteHeaderNow()
 
-	Reset()
+	Reset(http.ResponseWriter)
 
 	Written() bool
 }
@@ -26,7 +26,8 @@ type responseWriter struct {
 	status int
 }
 
-func (w *responseWriter) Reset() {
+func (w *responseWriter) Reset(writer http.ResponseWriter) {
+	w.ResponseWriter = writer
 	w.size = noWritten
 	w.status = defaultStatus
 }
