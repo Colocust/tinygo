@@ -94,8 +94,17 @@ func (e *Engine) addRoute(method string, uri string, handlers HandlersChain) {
 	e.router[method][uri] = handlers
 }
 
-func serveError(ctx *Context, status int, defaultMessage []byte) {
+var mimePlain = []string{"text/plain"}
 
+func serveError(ctx *Context, status int, defaultMessage []byte) {
+	if ctx.Writer.Written() {
+		return
+	}
+
+	ctx.Writer.Header()["Content-Type"] = mimePlain
+
+	ctx.Writer.WriteHeader(status)
+	_, _ = ctx.Writer.Write(defaultMessage)
 }
 
 func HandlerFuncWithTimeout(t time.Duration) HandlerFunc {

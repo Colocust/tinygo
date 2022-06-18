@@ -16,6 +16,8 @@ type ResponseWriter interface {
 	WriteHeaderNow()
 
 	Reset()
+
+	Written() bool
 }
 
 type responseWriter struct {
