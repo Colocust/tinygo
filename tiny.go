@@ -63,6 +63,7 @@ func (e *Engine) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 	ctx.Writer.Reset()
 	ctx.Request = req
+	ctx.reset()
 
 	e.handleHTTPRequest(ctx)
 }
@@ -114,6 +115,7 @@ func HandlerFuncWithTimeout(t time.Duration) HandlerFunc {
 		case <-ctx.Done():
 			c.Abort()
 			c.Json(http.StatusGatewayTimeout, default504Body)
+			c.SetTimeout()
 		case <-finish:
 		}
 	}

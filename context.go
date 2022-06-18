@@ -4,6 +4,7 @@ import (
 	"github.com/Colocust/tinygo/render"
 	"math"
 	"net/http"
+	"sync"
 )
 
 // 处理writer
@@ -15,6 +16,9 @@ type Context struct {
 
 	Handlers HandlersChain
 	index    int8
+
+	hasTimeout bool
+	mutex      sync.Mutex
 }
 
 const AbortIndex = math.MaxInt8 >> 1
@@ -47,10 +51,26 @@ func (ctx *Context) Json(status int, data interface{}) {
 }
 
 func (ctx *Context) render(status int, r render.Render) {
-	ctx.status(status)
-	r.Render(ctx.Writer)
+	if !ctx.HasTimeout() {
+		ctx.status(status)
+		r.Render(ctx.Writer)
+	}
 }
 
 func (ctx *Context) status(status int) {
 	ctx.Writer.WriteHeader(status)
+}
+
+func (ctx *Context) SetTimeout() {
+	ctx.mutex.Lock()
+	defer ctx.mutex.Unlock()
+
+	ctx.hasTimeout = true
+}
+
+func (ctx *Context) HasTimeout() bool {
+	ctx.mutex.Lock()
+	defer ctx.mutex.Unlock()
+
+	return ctx.hasTimeout
 }

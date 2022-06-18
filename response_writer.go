@@ -1,6 +1,8 @@
 package tinygo
 
-import "net/http"
+import (
+	"net/http"
+)
 
 const (
 	noWritten     = -1
@@ -12,15 +14,6 @@ type ResponseWriter interface {
 
 	// 写入httpStatus
 	WriteHeaderNow()
-
-	// 判断当前是否已经写入过数据
-	Written() bool
-
-	// 获取当前的网络状态码
-	Status() int
-
-	// 获取当前已经写入的字节数量
-	Size() int
 
 	Reset()
 }
@@ -46,28 +39,19 @@ func (w *responseWriter) WriteHeader(status int) {
 
 func (w *responseWriter) WriteHeaderNow() {
 	if !w.Written() {
+		w.size = 0
 		w.ResponseWriter.WriteHeader(w.status)
 	}
 }
 
 func (w *responseWriter) Written() bool {
-	return w.size == noWritten
+	return w.size != noWritten
 }
 
 func (w *responseWriter) Write(data []byte) (n int, err error) {
 	w.WriteHeaderNow()
 
-	w.size = 0
 	n, err = w.ResponseWriter.Write(data)
 	w.size += n
-
 	return
-}
-
-func (w *responseWriter) Status() int {
-	return w.status
-}
-
-func (w *responseWriter) Size() int {
-	return w.size
 }
